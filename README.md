@@ -31,7 +31,7 @@ CSV 데이터를 정리하고( run 분리/시간축 정리 ),
 ## Data
 - 원본 CSV는 용량/관리 이유로 GitHub에 포함하지 않음.
 - 로컬에 `data/raw/Basic_Model_20251015_15.csv`로 배치 후 실행.
-- 전처리 실행: `python -m src.data_make` → `data/processed/processed_v1_run_abs_features.csv` 생성
+- 전처리 실행: `src/data_make.py` → `data/processed/processed_v1_run_abs_features.csv` 생성
 
 ---
 
