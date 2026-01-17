@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# -----------------------------
+# Data (large files excluded)
+# -----------------------------
+
+# raw: keep folder visible, ignore actual raw files
+data/raw/*
+!data/raw/.gitkeep
+
+# interim / processed: ignore all contents, keep folders visible
+data/interim/*
+data/processed/*
+!data/interim/.gitkeep
+!data/processed/.gitkeep
+
+# ignore all csv under tables by default
+tables/**/*.csv
+
+# allow Day0 data dictionary csv only
+!tables/Day0/Day0_data_dictionary.csv
