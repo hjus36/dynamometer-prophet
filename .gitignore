@@ -10,7 +10,7 @@ venv/
 # Jupyter
 .ipynb_checkpoints/
 
-# OS / Editor
+# OS/Editor
 .DS_Store
 Thumbs.db
 .vscode/
@@ -20,21 +20,23 @@ Thumbs.db
 *.log
 
 # -----------------------------
-# Data (large files excluded)
+# Data (GitHub 미포함, 폴더만 유지)
 # -----------------------------
-
-# raw: keep folder visible, ignore actual raw files
 data/raw/*
-!data/raw/.gitkeep
-
-# interim / processed: ignore all contents, keep folders visible
 data/interim/*
 data/processed/*
+!data/raw/.gitkeep
 !data/interim/.gitkeep
 !data/processed/.gitkeep
 
-# ignore all csv under tables by default
+# -----------------------------
+# Tables (CSV는 대부분 미포함)
+# -----------------------------
 tables/**/*.csv
-
-# allow Day0 data dictionary csv only
+!tables/Day0/
 !tables/Day0/Day0_data_dictionary.csv
+
+# -----------------------------
+# Reports
+# -----------------------------
+reports/final/
