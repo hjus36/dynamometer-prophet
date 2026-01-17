@@ -11,7 +11,7 @@ CSV 데이터를 정리하고( run 분리/시간축 정리 ),
 ## 폴더 구조
 - data/raw: 원본 CSV(수정 X, GitHub에는 미포함)
 - data/interim: 중간 정리 데이터(GitHub에는 미포함)
-- data/processed: 정리본(run_id, abs_time, 대표 센서 등 / GitHub에는 미포함)
+- data/processed: 정리본(로컬 생성, GitHub 미포함)
 - notebooks: Day1~Day5 분석 기록
 - src: 재사용 코드(정리/특징/시각화/모델/평가)
 - figures: Day별 그래프 저장
