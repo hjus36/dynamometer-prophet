@@ -1,4 +1,4 @@
-# src/data_make.py
+# 전처리 파이프라인. raw CSV → 컬럼 정리(공백 제거) → run_id/abs_time_ms 생성 → (스케일 가정) → 대표 센서(Temp_mean, Press_mean, Vib_rms) 추가 → processed 저장.
 from __future__ import annotations
 
 from dataclasses import dataclass
