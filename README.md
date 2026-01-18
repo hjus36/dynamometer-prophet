@@ -20,14 +20,6 @@ CSV 데이터를 정리하고( run 분리/시간축 정리 ),
 
 ---
 
-## 파일명 규칙
-- 그래프: `Day{N}_<type>_<target>_[runXXXX]_<etc>.png`
-  - 예) `Day1_timeplot_run0123_FB_Rpm.png`
-- 표: `Day{N}_<desc>.csv`
-  - 예) `Day2_corr_sample.csv`
-
----
-
 ## Data
 - 원본 CSV는 용량/관리 이유로 GitHub에 포함하지 않음.
 - 로컬에 `data/raw/Basic_Model_20251015_15.csv`로 배치 후 실행.

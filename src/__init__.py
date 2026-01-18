@@ -1,1 +1,1 @@
-# src package (Day0 setup)
+# src package

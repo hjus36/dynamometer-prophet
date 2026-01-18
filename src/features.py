@@ -1,4 +1,4 @@
-# src/features.py
+# 특징(파생변수) 생성 모음. Temp_mean, Press_mean, Vib_rms 같은 “대표 센서” 계산을 담당.
 import numpy as np
 import pandas as pd
 

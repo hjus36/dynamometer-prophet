@@ -26,8 +26,11 @@ class DataConfig:
     # 스케일 가정(값/10): 필요하면 True로 두고, Day1에서 실제 확인 후 수정
     scale_div10: bool = True
 
-    # 스케일 적용 대상 컬럼 prefix
-    scale_prefixes: tuple[str, ...] = ("FB_", "Temp", "Press")
+    # 스케일 적용 대상 컬럼 prefix (Temp/Press만)
+    scale_prefixes: tuple[str, ...] = ("Temp", "Press")
+
+    # 스케일(/10) 적용할 컬럼을 명시적으로 지정 (Torque만)
+    scale_columns_div10: tuple[str, ...] = ("FB_Torque",)
 
 
 def load_raw_csv(csv_path: str | Path, cfg: DataConfig) -> pd.DataFrame:
@@ -77,20 +80,29 @@ def add_abs_time(df: pd.DataFrame, cfg: DataConfig, time_col: str = "Time") -> p
 def apply_scale_assumption(df: pd.DataFrame, cfg: DataConfig) -> pd.DataFrame:
     """
     값/10 스케일 가정 적용(선택).
-    - FB_*, Temp*, Press* 컬럼에 대해 /10 수행
-    - Vib_*는 오프셋 포함 raw일 수 있어 기본적으로 변환 제외
+    - Temp*, Press* 컬럼은 /10
+    - FB_Torque는 컬럼명을 명시해서 /10
+    - FB_Rpm은 Day1 오전에 결정할 때까지 변환 보류
     """
     if not cfg.scale_div10:
         return df
 
     df = df.copy()
+
+    # 1) Temp/Press prefix 적용
     for c in df.columns:
         if c == "Time":
             continue
         if c.startswith(cfg.scale_prefixes):
-            # 숫자형 컬럼만 변환(혹시 모를 문자열/결측 대응)
             df[c] = pd.to_numeric(df[c], errors="coerce") / 10.0
+
+    # 2) 명시 컬럼 적용 (Torque만)
+    for c in cfg.scale_columns_div10:
+        if c in df.columns:
+            df[c] = pd.to_numeric(df[c], errors="coerce") / 10.0
+
     return df
+
 
 
 def make_processed_dataset(
