@@ -1,48 +1,64 @@
-# 전처리 파이프라인. raw CSV → 컬럼 정리(공백 제거) → run_id/abs_time_ms 생성 → (스케일 가정) → 대표 센서(Temp_mean, Press_mean, Vib_rms) 추가 → processed 저장.
+# raw CSV → 컬럼 정리(공백 제거/unnamed 제거) → run_id/abs_time_ms 생성
+# → (스케일 가정) → 대표 센서(Temp_mean, Press_mean, Vib_*) 추가 → processed 저장.
+
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Dict, Tuple, Iterable
+
 import pandas as pd
 
 from .features import add_representative_sensors
 
 
-@dataclass
+@dataclass(frozen=True)
 class DataConfig:
     """
-    Day0(준비단계)에서 확정해두는 데이터 처리 규칙 모음.
-    Day1부터는 이 설정을 그대로 써서 일관되게 전처리한다.
+    데이터 처리 규칙 모음.
     """
-    # 원본에서 불필요 컬럼(예: Unnamed: 42) 제거 여부
+    # 기본
     drop_unnamed_cols: bool = True
+    run_period_ms: int = 5000  # Time: 0~4950ms ≈ 5000ms
+    time_col: str = "Time"
 
-    # run 길이 가정 (Time: 0~4950ms => 약 5000ms)
-    run_period_ms: int = 5000
+    # 스케일 가정 적용 여부
+    enable_scale: bool = True
 
-    # Time 단위(가정): ms
-    time_unit: str = "ms"
+    # prefix 기반 스케일: Temp**, Press** 등
+    # 예) {"Temp": 10.0, "Press": 10.0} -> 해당 prefix 컬럼들은 값/10
+    scale_prefix_divisor: Dict[str, float] = field(default_factory=lambda: {"Temp": 10.0, "Press": 10.0})
 
-    # 스케일 가정(값/10): 필요하면 True로 두고, Day1에서 실제 확인 후 수정
-    scale_div10: bool = True
+    # 컬럼 단위 스케일: FB_Torque 등
+    # 예) {"FB_Torque": 10.0} -> 값/10
+    scale_column_divisor: Dict[str, float] = field(default_factory=lambda: {"FB_Torque": 10.0})
 
-    # 스케일 적용 대상 컬럼 prefix (Temp/Press만)
-    scale_prefixes: tuple[str, ...] = ("Temp", "Press")
+    # - False: 변환 보류(그대로 사용)
+    # - True : 아래 scale_column_divisor에 "FB_Rpm": 10.0 같은 걸 넣어 적용
+    apply_rpm_scale: bool = False
 
-    # 스케일(/10) 적용할 컬럼을 명시적으로 지정 (Torque만)
-    scale_columns_div10: tuple[str, ...] = ("FB_Torque",)
+    # RPM 스케일을 True로 둘 경우 사용할 divisor (기본 10)
+    rpm_divisor: float = 10.0
+
+    def resolved_scale_column_divisor(self) -> Dict[str, float]:
+        """
+        apply_rpm_scale 설정을 반영해 최종 column 스케일 맵을 생성한다.
+        """
+        out = dict(self.scale_column_divisor)
+        if self.apply_rpm_scale:
+            out["FB_Rpm"] = float(self.rpm_divisor)
+        return out
 
 
 def load_raw_csv(csv_path: str | Path, cfg: DataConfig) -> pd.DataFrame:
     """
-    원본 CSV 로딩 + 기본 정리(unnamed 컬럼 제거 등).
+    원본 CSV 로딩 + 기본 정리(컬럼 공백 제거, unnamed 제거 등).
     """
     csv_path = Path(csv_path)
     df = pd.read_csv(csv_path)
     df.columns = df.columns.str.strip()
 
     if cfg.drop_unnamed_cols:
-        # "Unnamed: ..." 형태의 컬럼 제거
         unnamed = [c for c in df.columns if c.startswith("Unnamed")]
         if unnamed:
             df = df.drop(columns=unnamed)
@@ -50,87 +66,97 @@ def load_raw_csv(csv_path: str | Path, cfg: DataConfig) -> pd.DataFrame:
     return df
 
 
-def add_run_id(df: pd.DataFrame, time_col: str = "Time") -> pd.DataFrame:
+def add_run_id(df: pd.DataFrame, time_col: str) -> pd.DataFrame:
     """
     Time이 감소하는 지점(예: 4950 -> 0)을 run 경계로 보고 run_id를 생성한다.
     """
-    df = df.copy()
+    if time_col not in df.columns:
+        raise ValueError(f"'{time_col}' 컬럼이 없습니다. (컬럼 목록: {list(df.columns)})")
 
-    # Time 차분이 음수면(감소) 새로운 run 시작
-    time_diff = df[time_col].diff()
+    out = df.copy()
+    time_diff = out[time_col].diff()
     run_boundary = (time_diff < 0).fillna(False)
+    out["run_id"] = run_boundary.cumsum().astype(int)
+    return out
 
-    df["run_id"] = run_boundary.cumsum().astype(int)
-    return df
 
-
-def add_abs_time(df: pd.DataFrame, cfg: DataConfig, time_col: str = "Time") -> pd.DataFrame:
+def add_abs_time(df: pd.DataFrame, cfg: DataConfig) -> pd.DataFrame:
     """
     Prophet 입력을 위한 연속 시간축(abs_time_ms) 생성.
     abs_time_ms = run_id * run_period_ms + Time
     """
-    df = df.copy()
     if "run_id" not in df.columns:
         raise ValueError("run_id 컬럼이 없습니다. add_run_id()를 먼저 호출하세요.")
+    if cfg.time_col not in df.columns:
+        raise ValueError(f"'{cfg.time_col}' 컬럼이 없습니다.")
 
-    df["abs_time_ms"] = df["run_id"] * cfg.run_period_ms + df[time_col]
-    return df
+    out = df.copy()
+    out["abs_time_ms"] = out["run_id"] * cfg.run_period_ms + out[cfg.time_col]
+    return out
+
+
+def _select_columns_by_prefix(columns: Iterable[str], prefix: str) -> list[str]:
+    return [c for c in columns if c.startswith(prefix)]
 
 
 def apply_scale_assumption(df: pd.DataFrame, cfg: DataConfig) -> pd.DataFrame:
     """
-    값/10 스케일 가정 적용(선택).
-    - Temp*, Press* 컬럼은 /10
-    - FB_Torque는 컬럼명을 명시해서 /10
-    - FB_Rpm은 Day1 오전에 결정할 때까지 변환 보류
+    스케일 가정 적용(선택).
+
+    - prefix 기반: Temp*, Press* 등 /divisor
+    - column 기반: FB_Torque 등 /divisor
+    - FB_Rpm은 cfg.apply_rpm_scale로 적용 여부를 결정 (기본: 보류)
     """
-    if not cfg.scale_div10:
+    if not cfg.enable_scale:
         return df
 
-    df = df.copy()
+    out = df.copy()
 
-    # 1) Temp/Press prefix 적용
-    for c in df.columns:
-        if c == "Time":
+    # 1) prefix 기반 스케일
+    for prefix, divisor in cfg.scale_prefix_divisor.items():
+        cols = _select_columns_by_prefix(out.columns, prefix)
+        if not cols:
             continue
-        if c.startswith(cfg.scale_prefixes):
-            df[c] = pd.to_numeric(df[c], errors="coerce") / 10.0
+        # 안전하게 숫자 변환 후 나누기
+        out[cols] = out[cols].apply(pd.to_numeric, errors="coerce") / float(divisor)
 
-    # 2) 명시 컬럼 적용 (Torque만)
-    for c in cfg.scale_columns_div10:
-        if c in df.columns:
-            df[c] = pd.to_numeric(df[c], errors="coerce") / 10.0
+    # 2) column 기반 스케일 (+ RPM 옵션 반영)
+    col_div = cfg.resolved_scale_column_divisor()
+    for col, divisor in col_div.items():
+        if col not in out.columns:
+            continue
+        out[col] = pd.to_numeric(out[col], errors="coerce") / float(divisor)
 
-    return df
-
+    return out
 
 
 def make_processed_dataset(
     csv_path: str | Path,
     cfg: DataConfig = DataConfig(),
-    time_col: str = "Time",
     sort_within_run: bool = True,
 ) -> pd.DataFrame:
     """
     Day1에서 사용할 '처리된 데이터'를 생성하는 메인 함수.
+
     흐름:
     1) raw 로딩
     2) run_id 생성
-    3) abs_time 생성
-    4) 스케일 가정 적용(/10)
-    5) 대표 센서(feature) 생성(Temp_mean, Press_mean, Vib_rms)
+    3) (선택) run_id, Time 정렬
+    4) abs_time_ms 생성
+    5) 스케일 가정 적용
+    6) 대표 센서(feature) 생성
     """
     df = load_raw_csv(csv_path, cfg)
-    df = add_run_id(df, time_col=time_col)
+
+    df = add_run_id(df, time_col=cfg.time_col)
 
     if sort_within_run:
-        # run_id, Time 기준 정렬(그래프/모델링 시 안정적)
-        df = df.sort_values(["run_id", time_col], kind="mergesort").reset_index(drop=True)
+        df = df.sort_values(["run_id", cfg.time_col], kind="mergesort").reset_index(drop=True)
 
-    df = add_abs_time(df, cfg, time_col=time_col)
+    df = add_abs_time(df, cfg)
     df = apply_scale_assumption(df, cfg)
 
-    # 대표 센서 추가
+    # 대표 센서 추가(Temp_mean, Press_mean, Vib_* 등)
     df = add_representative_sensors(df)
 
     return df
@@ -146,9 +172,13 @@ def save_processed_dataset(df: pd.DataFrame, out_path: str | Path) -> None:
 
 
 if __name__ == "__main__":
-    # 예시 실행(경로는 Day1에 본인 환경에 맞게 수정)
+    # 예시 실행
     # python -m src.data_make
-    cfg = DataConfig()
+    cfg = DataConfig(
+        enable_scale=True,
+        apply_rpm_scale=False,   # Day1에서 확정 전까지는 False 권장
+    )
+
     input_csv = Path("data/raw/Basic_Model_20251015_15.csv")
     output_csv = Path("data/processed/processed_v1_run_abs_features.csv")
 
