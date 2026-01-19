@@ -36,7 +36,6 @@ def save_lineplot(x, y, title, filename):
 x = df["abs_time_ms"] / TIME_DIV
 tlabel = f"abs_time ({TIME_UNIT})"
 
-# 파일명에서 A_ 제거: abs_*.png 형태로 저장
 save_lineplot(x, df["FB_Rpm"], f"FB_Rpm over {tlabel}", "abs_FB_Rpm.png")
 save_lineplot(x, df["FB_Torque"], f"FB_Torque over {tlabel}", "abs_FB_Torque.png")
 save_lineplot(x, df["Torque_abs"], f"Torque_abs over {tlabel}", "abs_Torque_abs.png")
