@@ -28,15 +28,3 @@ data/processed/*
 !data/raw/.gitkeep
 !data/interim/.gitkeep
 !data/processed/.gitkeep
-
-# -----------------------------
-# Tables (CSV는 대부분 미포함)
-# -----------------------------
-tables/**/*.csv
-!tables/Day0/
-!tables/Day0/Day0_data_dictionary.csv
-
-# -----------------------------
-# Reports
-# -----------------------------
-reports/final/
