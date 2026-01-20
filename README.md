@@ -35,7 +35,7 @@ CSV 데이터를 정리하고( run 분리/시간축 정리 ),
 - `src/data_make.py`: 원본 CSV 로딩/정리 → run_id 생성 → abs_time_ms 생성 → 스케일 가정 적용 → 대표 센서(feature) 추가 → processed CSV 저장
 - `src/data_summary.py`: 전처리된 데이터의 기본 요약(컬럼/결측치/기초 통계/run 요약 등)을 계산해 `tables/Day1`에 저장
 - `src/features.py`: Temp/Press 다채널 및 진동축(Vib)에서 대표값(평균/크기 지표 등)과 파생변수를 생성하는 함수 모음
-- `src/day1_figures_abs_time.py`: 전체 abs_time_ms 기준으로 주요 센서(RPM/토크/압력/온도/진동 등) 시간그래프를 생성해 
+- `src/day1_figures_abs_time.py`: 전체 abs_time_ms 기준으로 주요 센서(RPM/토크/압력/온도/진동 등) 시간그래프를 생성해 `figures/Day1`에 저장
 - `src/day2_relationship.py`: 센서 간 관계 분석 수행 → 토크 기준으로 RPM/진동/온도/압력 산점도 4개를 `figures/Day2`에 저장하고, 전체 구간 상관표(corr_all.csv)와 가동 구간(RPM>0) 상관표(corr_running.csv)를 `tables/Day2`에 저장
 ---
 
