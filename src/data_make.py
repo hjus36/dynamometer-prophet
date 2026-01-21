@@ -176,7 +176,7 @@ if __name__ == "__main__":
     # python -m src.data_make
     cfg = DataConfig(
         enable_scale=True,
-        apply_rpm_scale=False,   # Day1에서 확정 전까지는 False 권장
+        apply_rpm_scale=False,
     )
 
     input_csv = Path("data/raw/Basic_Model_20251015_15.csv")
