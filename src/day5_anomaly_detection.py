@@ -1,29 +1,5 @@
 from __future__ import annotations
 
-"""
-Day5 (Visualization-first, using PROCESSED data):
-- Input: data/processed/processed_v1_run_abs_features.csv
-- Detection: Robust-Z ONLY for Vib_rms (sample-level)
-- Visualization focus:
-  1) day5_vib_robust_score_panel.png     (2-panel: Vib context + |z| score)
-  2) day5_multisensor_overview.png       (multi-sensor overview + anomaly timing)
-  3) figures/Day5/events/event_XX_*.png  (per-event multi-sensor context around peak)
-
-Fixes in this version:
-- Use score timeline (z_abs 1s max) as the ANCHOR timeline.
-  -> Avoids sec-offset mismatch caused by inner joins / missing Temp/Press.
-- Join other sensors with LEFT join onto the score timeline.
-- Apply MIN_EVENT_SPACING_SEC when selecting event plots (no more clustered events).
-
-Notes:
-- No running/idle split (as requested).
-- VIB_Z_K = 7.0 (as requested).
-- CSV output is optional (default OFF).
-
-Run:
-  python -m src.day5_anomaly_detection
-"""
-
 from pathlib import Path
 import numpy as np
 import pandas as pd

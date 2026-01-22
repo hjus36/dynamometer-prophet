@@ -214,7 +214,7 @@ def main():
             TAB_DIR / "day4_regressor_standardization.csv", index=False
         )
 
-    # ✅ 평가 데이터는 target+regressors를 한 번에 dropna 해서 uni/multi 동일 구간 비교
+    # 평가 데이터는 target+regressors를 한 번에 dropna 해서 uni/multi 동일 구간 비교
     eval_cols = ["ds", TARGET] + REGRESSORS
     eval_df = test_df[eval_cols].dropna().copy()
     if len(eval_df) < 30:
