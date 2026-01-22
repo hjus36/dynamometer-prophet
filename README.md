@@ -39,6 +39,7 @@ CSV 데이터를 정리하고( run 분리/시간축 정리 ),
 - `day2_relationship.py`: 센서 간 관계 분석 수행
 - `day3_forecast_univariate.py`: Prophet 단변량 예측(토크/온도) 수행
 - `day4_forecast_multisensor.py`: Prophet 다변량 예측(토크) 수행(회귀변수: RPM/압력(Press_mean))
+- `day5_anomaly_detection.py`: 이상치 검출 수행
 ---
 
 ## Data
