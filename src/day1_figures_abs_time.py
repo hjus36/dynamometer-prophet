@@ -47,7 +47,7 @@ if "Temp_mean" in df.columns:
     save_lineplot(x, df["Temp_mean"], f"Temp_mean over {tlabel}", "abs_Temp_mean.png")
 
 if vib_col:
-    save_lineplot(x, df[vib_col], f"{vib_col} over {tlabel}", "abs_Vib_rep.png")
+    save_lineplot(x, df[vib_col], f"{vib_col} over {tlabel}", "abs_Vib_rms.png")
 else:
     print("[WARN] representative vibration column not found (no Vib_* besides Vib_X/Y/Z).")
 
