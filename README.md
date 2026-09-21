@@ -47,13 +47,3 @@ CSV 데이터를 정리하고( run 분리/시간축 정리 ),
 - 로컬에 `data/raw/Basic_Model_20251015_15.csv`로 배치 후 실행.
 - 전처리 실행: `python -m src.data_make`
   → `data/processed/processed_v1_run_abs_features.csv` 생성
-
----
-
-## 진행 요약
-- Day0 준비(구조/정의서/전처리)
-- Day1 정리+기초그래프
-- Day2 관계(산점도/상관)
-- Day3 단변량 예측+MAE
-- Day4 다변량 예측 비교
-- Day5 이상치+최종 보고서
